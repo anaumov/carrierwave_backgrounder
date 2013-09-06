@@ -23,13 +23,20 @@ module CarrierWave
           private
 
           def enqueue_delayed_job(worker, *args)
-            if ::Delayed::Job.new.respond_to?(:queue)
-              ::Delayed::Job.enqueue worker.new(*args), :queue => queue_options[:queue]
-            else
-              ::Delayed::Job.enqueue worker.new(*args)
-              if queue_options[:queue]
-                ::Rails.logger.warn("Queue name given but no queue column exists for Delayed::Job")
+            begin
+              puts 'job enqueued'
+              if ::Delayed::Job.new.respond_to?(:queue)
+                ::Delayed::Job.enqueue worker.new(*args), :queue => queue_options[:queue]
+              else
+                ::Delayed::Job.enqueue worker.new(*args)
+                if queue_options[:queue]
+                  ::Rails.logger.warn("Queue name given but no queue column exists for Delayed::Job")
+                end
               end
+            rescue => err
+              puts 'raise'
+              Rails.logger.error err
+              Airbrake.notify err
             end
           end
 
